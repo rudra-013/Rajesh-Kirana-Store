@@ -1,0 +1,312 @@
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  max-width: 100vw;
+  background: white;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: slideInRight var(--transition-slow) ease;
+}
+
+/* Header */
+.cart-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cart-drawer__header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cart-drawer__header-icon {
+  font-size: 20px;
+}
+
+.cart-drawer__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.cart-drawer__count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+}
+
+.cart-drawer__close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  border: none;
+}
+
+.cart-drawer__close:hover {
+  background: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+/* Delivery strip */
+.cart-drawer__delivery-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-6);
+  background: var(--color-primary-light);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-dark);
+}
+
+/* Body */
+.cart-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-6);
+}
+
+.cart-drawer__item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Footer */
+.cart-drawer__footer {
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cart-drawer__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cart-drawer__summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.cart-drawer__summary-row--total {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+/* Promo section */
+.cart-promo {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+}
+
+.cart-promo__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.cart-promo__title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.cart-promo__toggle-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.cart-promo__toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.cart-promo__form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.cart-promo__input {
+  flex: 1;
+  height: 34px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  background: white;
+  text-transform: uppercase;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+}
+
+.cart-promo__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.cart-promo__apply-btn {
+  height: 34px;
+  padding: 0 var(--space-3);
+}
+
+.cart-promo__applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-sm);
+}
+
+.cart-promo__applied-badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-dark);
+}
+
+.cart-promo__remove-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.cart-promo__remove-btn:hover {
+  text-decoration: underline;
+}
+
+.cart-promo__msg {
+  font-size: 11px;
+  margin-top: var(--space-1);
+}
+
+.cart-promo__msg--error {
+  color: var(--color-error);
+}
+
+.cart-promo__msg--success {
+  color: var(--color-primary-dark);
+}
+
+.cart-promo__coupons {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cart-promo__coupons-heading {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cart-promo__coupons-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cart-promo__coupon-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-light);
+}
+
+.cart-promo__coupon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cart-promo__coupon-code {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  letter-spacing: 0.05em;
+}
+
+.cart-promo__coupon-desc {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.cart-promo__coupon-apply {
+  background: none;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cart-promo__coupon-apply:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: white;
+}
+
+.cart-promo__coupon-apply:disabled {
+  opacity: 0.6;
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.cart-drawer__checkout-btn {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .cart-drawer {
+    width: 100vw;
+  }
+}

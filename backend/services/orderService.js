@@ -3,10 +3,11 @@ import { ProductModel } from '../models/Product.js';
 import { AddressModel } from '../models/Address.js';
 import { PromoService } from './promoService.js';
 import { CartModel } from '../models/Cart.js';
+import { BargainModel } from '../models/Bargain.js';
 
 export class OrderService {
   /**
-   * Create a new order with server-validated pricing
+   * Create a new order with server-validated pricing & bargaining validation
    */
   static async createOrder(userId, { items, addressId, address, promoCode, paymentMethod = 'COD' }) {
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -45,7 +46,7 @@ export class OrderService {
       throw error;
     }
 
-    // Validate all items and calculate prices strictly from backend products
+    // Validate all items and calculate prices strictly from backend products & approved bargains
     const orderItems = [];
     let subtotal = 0;
 
@@ -66,7 +67,33 @@ export class OrderService {
         throw error;
       }
 
-      const itemTotal = product.price * quantity;
+      let effectivePrice = product.price;
+      let isNegotiated = false;
+      let bargainingRequestId = null;
+
+      // Server-side Bargaining Validation
+      if (item.bargainingRequestId || item.isNegotiated) {
+        const reqId = item.bargainingRequestId;
+        if (reqId) {
+          const bargain = await BargainModel.findById(reqId);
+          if (
+            bargain &&
+            bargain.customerId === userId &&
+            String(bargain.productId) === String(product.id) &&
+            bargain.status === 'Accepted' &&
+            (!bargain.expiryTime || new Date() <= new Date(bargain.expiryTime))
+          ) {
+            effectivePrice = bargain.proposedPrice;
+            isNegotiated = true;
+            bargainingRequestId = bargain.id;
+            await BargainModel.markUsed(bargain.id);
+          } else {
+            console.warn(`Invalid/expired bargain request ${reqId} for user ${userId}. Reverting to original price.`);
+          }
+        }
+      }
+
+      const itemTotal = effectivePrice * quantity;
       subtotal += itemTotal;
 
       orderItems.push({
@@ -75,7 +102,11 @@ export class OrderService {
         category: product.category,
         quantity: product.quantity, // product unit size e.g. "1 kg"
         count: quantity,
-        price: product.price,
+        price: effectivePrice,
+        originalPrice: product.price,
+        negotiatedPrice: isNegotiated ? effectivePrice : null,
+        bargainingRequestId: bargainingRequestId,
+        isNegotiated,
         mrp: product.mrp,
         image: product.image,
         itemTotal,

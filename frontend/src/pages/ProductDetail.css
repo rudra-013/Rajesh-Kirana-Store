@@ -110,8 +110,34 @@
 }
 
 /* CTA */
-.product-detail__cta {
+.product-detail__cta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  flex-wrap: wrap;
   margin-top: var(--space-5);
+}
+
+.product-detail__cta {
+  flex-shrink: 0;
+}
+
+.product-detail__bargain-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-color: #f59e0b !important;
+  color: #d97706 !important;
+  background: #fffbebfb !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+
+.product-detail__bargain-btn:hover {
+  background: #fef3c7 !important;
+  border-color: #d97706 !important;
+  color: #b45309 !important;
+  transform: translateY(-1px);
 }
 
 .product-detail__qty-row {

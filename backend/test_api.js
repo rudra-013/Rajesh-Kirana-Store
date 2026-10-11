@@ -187,7 +187,44 @@ async function runTests() {
     });
     assert(doubleCancel.status === 400, 'Double cancellation rejected cleanly with 400');
 
-    // 14. Logout
+    // 14. Bargaining API Tests
+    const bargainRes = await makeRequest('/bargains', {
+      method: 'POST',
+      cookie: userCookie,
+      body: {
+        productId: 2,
+        proposedPrice: 140,
+        quantity: 1,
+        message: 'Can I get this for ₹140?',
+      },
+    });
+    assert(bargainRes.status === 210 || bargainRes.status === 200, 'POST /api/bargains creates pending bargaining request');
+    const bargainId = bargainRes.data.data.id;
+
+    const acceptRes = await makeRequest(`/bargains/admin/${bargainId}/accept`, {
+      method: 'POST',
+      cookie: userCookie,
+      body: { adminResponse: 'Accepted!' },
+    });
+    assert(acceptRes.status === 200 && acceptRes.data.data.status === 'Accepted', 'POST /api/bargains/admin/:id/accept accepts bargain offer');
+
+    const negotiatedOrderRes = await makeRequest('/orders', {
+      method: 'POST',
+      cookie: userCookie,
+      body: {
+        items: [
+          { id: 2, quantity: 1, bargainingRequestId: bargainId, isNegotiated: true },
+        ],
+        addressId,
+        paymentMethod: 'COD',
+      },
+    });
+    assert(
+      negotiatedOrderRes.status === 201 && negotiatedOrderRes.data.data.items[0].price === 140,
+      'POST /api/orders validates negotiated price server-side (₹140 instead of ₹165)'
+    );
+
+    // 15. Logout
     const logoutRes = await makeRequest('/auth/logout', { method: 'POST', cookie: userCookie });
     assert(logoutRes.status === 200, 'POST /api/auth/logout succeeds');
 

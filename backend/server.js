@@ -13,6 +13,7 @@ import cartRoutes from './routes/cartRoutes.js';
 import promoRoutes from './routes/promoRoutes.js';
 import addressRoutes from './routes/addressRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import bargainRoutes from './routes/bargainRoutes.js';
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/promos', promoRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/bargains', bargainRoutes);
 
 // 404 & Error Handling
 app.use(notFoundHandler);

@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useState, useEffect, useCallback } from 'react';
-import { authAPI, addressAPI, promoAPI, orderAPI } from '../services/api.js';
+import { authAPI, addressAPI, promoAPI, orderAPI, bargainAPI } from '../services/api.js';
 
 const CartContext = createContext(null);
 
@@ -56,18 +56,26 @@ const INITIAL_ADDRESSES = [
 const cartReducer = (state, action) => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const existing = state.items.find((i) => String(i.id) === String(action.payload.id));
+      const addedQty = action.payload.qty || 1;
+      const existing = state.items.find(
+        (i) =>
+          String(i.id) === String(action.payload.id) &&
+          (i.bargainingRequestId || null) === (action.payload.bargainingRequestId || null)
+      );
       if (existing) {
         return {
           ...state,
           items: state.items.map((i) =>
-            String(i.id) === String(action.payload.id) ? { ...i, qty: i.qty + 1 } : i
+            String(i.id) === String(action.payload.id) &&
+            (i.bargainingRequestId || null) === (action.payload.bargainingRequestId || null)
+              ? { ...i, qty: i.qty + addedQty }
+              : i
           ),
         };
       }
       return {
         ...state,
-        items: [...state.items, { ...action.payload, qty: 1 }],
+        items: [...state.items, { ...action.payload, qty: addedQty }],
       };
     }
 
@@ -409,18 +417,101 @@ export function CartProvider({ children }) {
     }
   }, []);
 
+  // Bargaining State
+  const [myBargains, setMyBargains] = useState([]);
+  const [adminBargains, setAdminBargains] = useState([]);
+
+  const fetchMyBargains = useCallback(async () => {
+    try {
+      const res = await bargainAPI.getMyRequests();
+      if (res?.data) {
+        setMyBargains(res.data);
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }, []);
+
+  const fetchAdminBargains = useCallback(async () => {
+    try {
+      const res = await bargainAPI.getAdminRequests();
+      if (res?.data) {
+        setAdminBargains(res.data);
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }, []);
+
   useEffect(() => {
     if (user) {
       fetchOrders();
       fetchCurrentOrder();
+      fetchMyBargains();
     }
-  }, [user, fetchOrders, fetchCurrentOrder]);
+  }, [user, fetchOrders, fetchCurrentOrder, fetchMyBargains]);
+
+  const submitBargainRequest = async ({ productId, proposedPrice, quantity, message }) => {
+    try {
+      const res = await bargainAPI.create({ productId, proposedPrice, quantity, message });
+      if (res?.data) {
+        fetchMyBargains();
+        return res;
+      }
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const addNegotiatedItemToCart = (product, bargain) => {
+    dispatch({
+      type: 'ADD_ITEM',
+      payload: {
+        ...product,
+        price: bargain.proposedPrice,
+        originalPrice: product.price,
+        negotiatedPrice: bargain.proposedPrice,
+        bargainingRequestId: bargain.id,
+        isNegotiated: true,
+        qty: bargain.quantity || 1,
+      },
+    });
+    dispatch({ type: 'OPEN_CART' });
+  };
+
+  const acceptBargainRequest = async (id, adminResponse) => {
+    try {
+      const res = await bargainAPI.accept(id, adminResponse);
+      if (res?.data) {
+        fetchAdminBargains();
+        fetchMyBargains();
+        return res;
+      }
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const rejectBargainRequest = async (id, adminResponse) => {
+    try {
+      const res = await bargainAPI.reject(id, adminResponse);
+      if (res?.data) {
+        fetchAdminBargains();
+        fetchMyBargains();
+        return res;
+      }
+    } catch (err) {
+      throw err;
+    }
+  };
 
   const createOrder = async (orderPayload) => {
     const payload = {
       items: cartState.items.map((i) => ({
         id: i.id,
         quantity: i.qty,
+        bargainingRequestId: i.bargainingRequestId || null,
+        isNegotiated: !!i.isNegotiated,
       })),
       addressId: orderPayload?.addressId,
       address: orderPayload?.address,
@@ -434,6 +525,7 @@ export function CartProvider({ children }) {
         clearCart();
         fetchOrders();
         fetchCurrentOrder();
+        fetchMyBargains();
         return res.data;
       }
     } catch (err) {
@@ -519,6 +611,15 @@ export function CartProvider({ children }) {
         fetchOrders,
         fetchCurrentOrder,
         cancelOrder,
+        // Bargain Exports
+        myBargains,
+        adminBargains,
+        fetchMyBargains,
+        fetchAdminBargains,
+        submitBargainRequest,
+        addNegotiatedItemToCart,
+        acceptBargainRequest,
+        rejectBargainRequest,
       }}
     >
       {children}

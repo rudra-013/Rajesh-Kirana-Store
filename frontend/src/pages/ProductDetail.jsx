@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getProductById } from '../data/products';
 import { useCart } from '../context/CartContext';
+import BargainModal from '../components/BargainModal';
 import './ProductDetail.css';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const product = getProductById(id);
   const { addItem, increment, decrement, getItemQty } = useCart();
+  const [showBargainModal, setShowBargainModal] = useState(false);
   const qty = product ? getItemQty(product.id) : 0;
 
   if (!product) {
@@ -92,39 +95,58 @@ export default function ProductDetail() {
 
             <div className="divider" />
 
-            {/* Add to cart */}
-            <div className="product-detail__cta">
-              {qty === 0 ? (
-                <button
-                  className="btn btn-primary btn-lg"
-                  onClick={() => addItem(product)}
-                  disabled={product.stock === 0}
-                >
-                  Add to Cart
-                </button>
-              ) : (
-                <div className="product-detail__qty-row">
-                  <div className="qty-control product-detail__qty-control">
-                    <button
-                      className="qty-control__btn"
-                      onClick={() => decrement(product.id)}
-                      aria-label="Decrease quantity"
-                    >
-                      −
-                    </button>
-                    <span className="qty-control__value">{qty}</span>
-                    <button
-                      className="qty-control__btn"
-                      onClick={() => increment(product.id)}
-                      aria-label="Increase quantity"
-                    >
-                      +
-                    </button>
+            {/* Add to cart + Bargain Button */}
+            <div className="product-detail__cta-row">
+              <div className="product-detail__cta">
+                {qty === 0 ? (
+                  <button
+                    className="btn btn-primary btn-lg"
+                    onClick={() => addItem(product)}
+                    disabled={product.stock === 0}
+                  >
+                    Add to Cart
+                  </button>
+                ) : (
+                  <div className="product-detail__qty-row">
+                    <div className="qty-control product-detail__qty-control">
+                      <button
+                        className="qty-control__btn"
+                        onClick={() => decrement(product.id)}
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </button>
+                      <span className="qty-control__value">{qty}</span>
+                      <button
+                        className="qty-control__btn"
+                        onClick={() => increment(product.id)}
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <p className="product-detail__added-msg">Added to cart</p>
                   </div>
-                  <p className="product-detail__added-msg">Added to cart</p>
-                </div>
-              )}
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-outline btn-lg product-detail__bargain-btn"
+                onClick={() => setShowBargainModal(true)}
+                disabled={product.stock === 0}
+              >
+                <span>🤝</span> Request Lower Price
+              </button>
             </div>
+
+            {/* Render Bargain Modal */}
+            {showBargainModal && (
+              <BargainModal
+                product={product}
+                onClose={() => setShowBargainModal(false)}
+              />
+            )}
 
             {/* Delivery note */}
             <div className="product-detail__delivery-note">

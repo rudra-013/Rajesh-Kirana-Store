@@ -128,6 +128,28 @@ export const orderAPI = {
     }),
 };
 
+// ── Bargain APIs ──
+export const bargainAPI = {
+  create: (payload) =>
+    request('/bargains', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  getMyRequests: () => request('/bargains/my-requests'),
+  getAdminRequests: () => request('/bargains/admin/all'),
+  accept: (id, adminResponse) =>
+    request(`/bargains/admin/${id}/accept`, {
+      method: 'POST',
+      body: JSON.stringify({ adminResponse }),
+    }),
+  reject: (id, adminResponse) =>
+    request(`/bargains/admin/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ adminResponse }),
+    }),
+  validate: (id) => request(`/bargains/validate/${id}`),
+};
+
 export default {
   auth: authAPI,
   user: userAPI,
@@ -136,4 +158,5 @@ export default {
   promos: promoAPI,
   addresses: addressAPI,
   orders: orderAPI,
+  bargain: bargainAPI,
 };

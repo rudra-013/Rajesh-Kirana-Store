@@ -1,14 +1,43 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { getProductById } from '../data/products';
 import { userAPI } from '../services/api';
 import './Profile.css';
 
 export default function Profile() {
-  const { user, logout, addresses, addAddress, editAddress, deleteAddress, availableCoupons, orders, currentOrder: serverCurrentOrder, cancelOrder } = useCart();
+  const {
+    user,
+    logout,
+    addresses,
+    addAddress,
+    editAddress,
+    deleteAddress,
+    availableCoupons,
+    orders,
+    currentOrder: serverCurrentOrder,
+    cancelOrder,
+    myBargains,
+    addNegotiatedItemToCart,
+    fetchMyBargains,
+  } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState('profile');
+  const getInitialTab = () => {
+    const fromState = location.state?.tab;
+    const fromQuery = new URLSearchParams(location.search).get('tab');
+    return fromState || fromQuery || 'profile';
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  useEffect(() => {
+    const tab = location.state?.tab || new URLSearchParams(location.search).get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location]);
 
   // Address form state
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -249,6 +278,17 @@ export default function Profile() {
                 <span>📦</span> My Orders
               </button>
               <button
+                className={`profile-menu__item ${activeTab === 'bargains' ? 'active' : ''}`}
+                onClick={() => setActiveTab('bargains')}
+              >
+                <span>🤝</span> My Bargains
+                {myBargains?.some((b) => b.status === 'Accepted') && (
+                  <span className="badge badge-success badge-sm" style={{ marginLeft: 'auto' }}>
+                    {myBargains.filter((b) => b.status === 'Accepted').length}
+                  </span>
+                )}
+              </button>
+              <button
                 className={`profile-menu__item ${activeTab === 'addresses' ? 'active' : ''}`}
                 onClick={() => setActiveTab('addresses')}
               >
@@ -435,6 +475,106 @@ export default function Profile() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* 3b. My Bargains Tab */}
+            {activeTab === 'bargains' && (
+              <div className="profile-section">
+                <div className="profile-section__header">
+                  <h2 className="profile-section__title" id="tab-heading">My Bargaining Requests</h2>
+                  <button className="btn btn-outline btn-sm" onClick={fetchMyBargains}>
+                    ↻ Refresh
+                  </button>
+                </div>
+
+                {!myBargains || myBargains.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '32px 0' }}>
+                    <div className="empty-state__icon">🤝</div>
+                    <h3 className="empty-state__title">No Bargain Requests Yet</h3>
+                    <p className="empty-state__subtitle">
+                      When viewing any product, click "Request Lower Price" to negotiate your price directly with the store owner!
+                    </p>
+                    <Link to="/" className="btn btn-primary btn-sm">Explore Products</Link>
+                  </div>
+                ) : (
+                  <div className="bargains-list">
+                    {myBargains.map((bargain) => {
+                      const isAccepted = bargain.status === 'Accepted';
+                      const isPending = bargain.status === 'Pending';
+                      const isRejected = bargain.status === 'Rejected';
+                      const isExpired = bargain.status === 'Expired';
+                      const productObj = getProductById(bargain.productId) || {
+                        id: bargain.productId,
+                        name: bargain.productName,
+                        price: bargain.originalPrice,
+                        quantity: bargain.productQuantity,
+                        emoji: bargain.productImage,
+                        stock: 10,
+                      };
+
+                      return (
+                        <div key={bargain.id} className={`bargain-card bargain-card--${bargain.status.toLowerCase()}`}>
+                          <div className="bargain-card__header">
+                            <div className="bargain-card__product-info">
+                              <span className="bargain-card__emoji">{bargain.productImage || '📦'}</span>
+                              <div>
+                                <h3 className="bargain-card__title">{bargain.productName}</h3>
+                                <p className="bargain-card__meta">Unit: {bargain.productQuantity} • Requested Qty: {bargain.quantity}</p>
+                              </div>
+                            </div>
+                            <span className={`badge badge-${isAccepted ? 'success' : isPending ? 'warning' : isRejected ? 'danger' : 'secondary'}`}>
+                              {isAccepted ? '✓ Accepted' : isPending ? '⏳ Pending' : isRejected ? '✕ Rejected' : '⏱ Expired'}
+                            </span>
+                          </div>
+
+                          <div className="bargain-card__prices">
+                            <div className="bargain-price-item">
+                              <span className="bargain-price-label">Original Price:</span>
+                              <span className="bargain-price-val line-through">₹{bargain.originalPrice}</span>
+                            </div>
+                            <div className="bargain-price-item">
+                              <span className="bargain-price-label">Your Proposed Offer:</span>
+                              <span className="bargain-price-val highlight">₹{bargain.proposedPrice}</span>
+                            </div>
+                            <div className="bargain-price-item">
+                              <span className="bargain-price-label">You Save:</span>
+                              <span className="bargain-savings-badge">
+                                ₹{bargain.originalPrice - bargain.proposedPrice} ({Math.round(((bargain.originalPrice - bargain.proposedPrice) / bargain.originalPrice) * 100)}% off)
+                              </span>
+                            </div>
+                          </div>
+
+                          {bargain.customerMessage && (
+                            <p className="bargain-card__message">
+                              <strong>Your Message:</strong> "{bargain.customerMessage}"
+                            </p>
+                          )}
+
+                          {bargain.adminResponse && (
+                            <div className={`bargain-card__admin-res ${isAccepted ? 'accepted' : 'rejected'}`}>
+                              <strong>Store Owner Response:</strong> {bargain.adminResponse}
+                            </div>
+                          )}
+
+                          {isAccepted && (
+                            <div className="bargain-card__footer">
+                              <div className="bargain-card__expiry">
+                                ⚡ Approved Price • Offer active for 24 hours
+                              </div>
+                              <button
+                                className="btn btn-primary bargain-buy-btn"
+                                onClick={() => addNegotiatedItemToCart(productObj, bargain)}
+                              >
+                                Buy at ₹{bargain.proposedPrice} 🛒
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
